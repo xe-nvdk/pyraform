@@ -15,7 +15,7 @@ Pyraform is a Python-based tool that simplifies Infrastructure as Code (IaC) for
 To use Pyraform, clone this repository and install the required dependencies:
 
 ```bash
-git clone https://github.com/your-repo/pyraform.git
+git clone https://github.com/xe-nvdk/pyraform.git
 cd pyraform
 pip install -r requirements.txt
 ```
