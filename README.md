@@ -17,6 +17,7 @@ To use Pyraform, clone this repository and install the required dependencies:
 git clone https://github.com/your-repo/pyraform.git
 cd pyraform
 pip install -r requirements.txt
+```
 
 ## Configuration
 Define your infrastructure in a YAML file (e.g., infrastructure.yml). Here's an example to get you started:
@@ -34,18 +35,20 @@ resources:
       size: 10
       attached_vm: web-server
 ```
+
 ## Deploying Infrastructure
 Run the following command to deploy your infrastructure:
 
 ```bash
 python main.py deploy
+```
 
 ## Destroying Infrastructure
-
 To tear down your infrastructure, use:
 
 ```bash
 python3 main.py destroy
+```
 
 ## Contributing
 Contributions to Pyraform are welcome! Please refer to the CONTRIBUTING.md file for guidelines.
