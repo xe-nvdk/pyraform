@@ -8,7 +8,7 @@ Pyraform is a Python-based tool that simplifies Infrastructure as Code (IaC) for
 - **State Management**: Track your infrastructure's current state with a `state.json` file.
 - **Resource Management**: Automate the creation, modification, and deletion of resources like VMs and disks.
 - **AWS Integration**: Seamlessly interacts with AWS services using Boto3.
-- **More Cloud Providers are coming. Your contribution is vital for this project.
+- **More Cloud Providers are coming**. Your contribution is vital to this project.
 
 ## Getting Started
 
