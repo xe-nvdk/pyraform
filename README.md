@@ -39,7 +39,7 @@ resources:
       attached_vm: web-server
 ```
 
-```note
+```tip
 Right now everything work as separate module, so you need to specify ec2.py or dns.py to deploy or destroy the infrastructure. The idea is to make it work as a single module in the future.
 ```
 
