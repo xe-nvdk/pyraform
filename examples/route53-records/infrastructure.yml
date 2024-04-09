@@ -1,0 +1,10 @@
+resources:
+  - type: route53_record
+    name: hola
+    properties:
+      zone_id: Z0959862ERODLBLTOEEK
+      name: hola.vandroogenbroeck.net
+      type: A
+      ttl: 300
+      records:
+        - 1.1.1.1
