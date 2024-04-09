@@ -46,7 +46,7 @@ Right now everything work as separate module, so you need to specify ec2.py or d
 Run the following command to deploy your infrastructure:
 
 ```bash
-python ec2.py deploy
+python3 ec2.py deploy
 ```
 
 ## Destroying Infrastructure EC2
