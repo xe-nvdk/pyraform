@@ -39,18 +39,22 @@ resources:
       attached_vm: web-server
 ```
 
-## Deploying Infrastructure
+```note
+Right now everything work as separate module, so you need to specify ec2.py or dns.py to deploy or destroy the infrastructure. The idea is to make it work as a single module in the future.
+```
+
+## Deploying Infrastructure EC2
 Run the following command to deploy your infrastructure:
 
 ```bash
-python main.py deploy
+python ec2.py deploy
 ```
 
-## Destroying Infrastructure
+## Destroying Infrastructure EC2
 To tear down your infrastructure, use:
 
 ```bash
-python3 main.py destroy
+python3 ec2.py destroy
 ```
 
 ## Contributing
