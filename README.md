@@ -40,7 +40,7 @@ resources:
 ```
 
 ### Note
-Right now everything work as separate module, so you need to specify ec2.py or dns.py to deploy or destroy the infrastructure. The idea is to make it work as a single module in the future.
+Right now everything work as a separate module, so you need to specify ec2.py or dns.py to deploy or destroy the infrastructure. The idea is to make it work as a single module in the future.
 
 ## Deploying Infrastructure EC2
 Run the following command to deploy your infrastructure:
