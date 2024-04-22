@@ -1,0 +1,12 @@
+resources:
+  - type: droplet
+    name: web-server
+    properties:
+      image: ubuntu-20-04-x64  # Example image slug for Ubuntu 20.04
+      size: s-1vcpu-1gb        # Example droplet size, similar to t2.micro
+      ssh_keys: [m1]           # You would specify the SSH key ID or fingerprint
+      region: nyc3             # New York 3 datacenter
+      user_data: "./webserver.sh"  # Path to a script to run on instance creation
+      tags:
+        - web
+        - production

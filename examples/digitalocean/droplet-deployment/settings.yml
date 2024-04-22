@@ -1,0 +1,3 @@
+do_credentials:
+  token: ${DO_TOKEN}
+  region: nyc3

@@ -1,0 +1,16 @@
+{
+    "resources": [
+        {
+            "type": "Droplet",
+            "name": "web-server",
+            "properties": {
+                "droplet_id": 414410944,
+                "status": "starting",
+                "tags": [
+                    "web",
+                    "production"
+                ]
+            }
+        }
+    ]
+}

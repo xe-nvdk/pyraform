@@ -1,0 +1,19 @@
+resources:
+  - type: vm
+    name: web-server
+    properties:
+      image_id: ami-051f8a213df8bc089
+      size: t2.micro
+      key_name: nacho
+      security_group: sg-07137c9cb12eb4317
+      availability_zone: us-east-1d
+      user_data_file: "./webserver.yaml"
+  - type: disk
+    name: web-server-disk
+    properties:
+      size: 16
+      volume_type: gp3
+      device_name: /dev/sda1
+      vm_name: web-server
+      status: attached
+      availability_zone: us-east-1d
