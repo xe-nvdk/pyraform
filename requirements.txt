@@ -1,2 +1,5 @@
 boto3
 pyyaml
+python-digitalocean
+colorama
+tabulate

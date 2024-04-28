@@ -3,6 +3,7 @@ from config_loader import load_infrastructure_config, load_user_settings
 from providers.digitalocean import DigitalOceanProvider
 from state.state_manager import load_state, update_state, save_state
 from resources.digitalocean.vm import VM
+from deployment_manager import confirm_action
 
 def deploy():
     state = load_state()
@@ -20,13 +21,18 @@ def deploy():
 
     do_provider = DigitalOceanProvider(token=do_credentials['token'])
 
-    vm_instance_ids = {}  # Store VM instance IDs by name
-
     for resource_config in infrastructure_config['resources']:
         resource_type = resource_config['type'].lower()
         
         if resource_type == 'droplet':
             droplet_properties = resource_config['properties']
+            resource_id = resource_config['name']
+            existing_resource = next((res for res in state.get('resources', []) if res['name'] == resource_id and res['type'] == 'Droplet'), None)
+
+            if existing_resource and existing_resource.get('properties', {}).get('droplet_id'):
+                print(f"Droplet '{resource_id}' already deployed with matching configuration.")
+                continue
+
             ssh_key_ids = [do_provider.get_ssh_key_id(key_name) for key_name in droplet_properties['ssh_keys'] if do_provider.get_ssh_key_id(key_name) is not None]
 
             print(f"Creating Droplet: {resource_config['name']} with properties {droplet_properties}")
@@ -41,15 +47,14 @@ def deploy():
             droplet_instance = droplet.create(do_provider)
             
             if droplet_instance:
-                print(f"Droplet {resource_config['name']} is being created with ID: {droplet_instance.id}")
-                vm_instance_ids[resource_config['name']] = droplet_instance.id
+                print(f"Droplet {resource_config['name']} created with ID: {droplet_instance.id}")
                 new_vm_state = {
                     "type": "Droplet",
                     "name": resource_config['name'],
                     "properties": {
-                        "droplet_id": droplet_instance.id,
-                        "status": "starting",
-                        "tags": droplet_properties.get('tags', [])
+                        **droplet_properties,
+                        "droplet_id": droplet_instance.id,  # Store the Droplet ID
+                        "ip_address": droplet_instance.ip_address
                     }
                 }
                 update_state(state, new_vm_state, "create")
@@ -82,6 +87,11 @@ def update_state(state, resource_config, action):
     # Save the updated state back to the file
     save_state(state)
 
+def save_state(state):
+    import json
+    with open('state.json', 'w') as f:
+        json.dump(state, f, indent=4)
+
 def destroy():
     state = load_state()
     user_settings = load_user_settings()
@@ -103,7 +113,6 @@ def destroy():
             if resource_type == 'droplet' and 'droplet_id' in resource_properties:
                 VM.delete(do_provider, resource_properties['droplet_id'])
                 print(f"Droplet {resource_name} deleted")
-                # Update the state to remove this droplet
                 update_state(state, resource_config, 'delete')
             else:
                 print(f"Unsupported resource type or missing ID for {resource_name}")
