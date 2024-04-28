@@ -4,12 +4,19 @@
             "type": "Droplet",
             "name": "web-server",
             "properties": {
-                "droplet_id": 414410944,
-                "status": "starting",
+                "image": "ubuntu-20-04-x64",
+                "size": "s-1vcpu-1gb",
+                "ssh_keys": [
+                    "m1"
+                ],
+                "region": "nyc3",
+                "user_data": "./webserver.sh",
                 "tags": [
                     "web",
                     "production"
-                ]
+                ],
+                "droplet_id": 415570865,
+                "ip_address": "68.183.145.240"
             }
         }
     ]
