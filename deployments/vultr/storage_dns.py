@@ -245,6 +245,28 @@ def deploy():
             }, 'create')
             logger.info(f"Created snapshot '{name}'")
 
+        elif rtype in ('vpc_route','vpcroute','route'):
+            # Create a route in a VPC
+            vpc_name = props['vpc']
+            vpc = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_vpc' and r.get('name') == vpc_name), None)
+            if not vpc or not vpc.get('properties', {}).get('vpc_id'):
+                logger.error(f"Cannot create VPC route '{name}': VPC '{vpc_name}' not found")
+            else:
+                route = vp.create_vpc_route(vpc['properties']['vpc_id'], cidr=props['cidr'], next_hop=props['next_hop'])
+                update_state(state, {'type': 'vultr_vpc_route','name': name,'properties': {**props, 'route_id': (route or {}).get('id')}}, 'create')
+                logger.info(f"Created VPC route '{name}'")
+
+        elif rtype in ('vpc_peering','vpcpeer','peering'):
+            # Create VPC peering between two VPCs
+            a = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_vpc' and r.get('name') == props['vpc_a']), None)
+            b = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_vpc' and r.get('name') == props['vpc_b']), None)
+            if not a or not b or not a.get('properties', {}).get('vpc_id') or not b.get('properties', {}).get('vpc_id'):
+                logger.error(f"Cannot create VPC peering '{name}': one or both VPCs not found")
+            else:
+                peer = vp.create_vpc_peering(vpc_id=a['properties']['vpc_id'], peer_vpc_id=b['properties']['vpc_id'], label=name)
+                update_state(state, {'type': 'vultr_vpc_peering','name': name,'properties': {**props, 'peering_id': (peer or {}).get('id')}}, 'create')
+                logger.info(f"Created VPC peering '{name}'")
+
 
         elif rtype == 'vpc':
             existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_vpc' and r.get('name') == name), None)
@@ -356,6 +378,16 @@ def destroy():
         name = res.get('name')
         props = res.get('properties', {})
         try:
+            if rtype == 'vultr_vpc_route' and props.get('route_id') and props.get('vpc'):
+                vpc = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_vpc' and r.get('name') == props['vpc']), None)
+                if vpc and vpc.get('properties', {}).get('vpc_id'):
+                    vp.delete_vpc_route(vpc['properties']['vpc_id'], props['route_id'])
+                    update_state(state, res, 'delete')
+                    logger.info(f"Deleted VPC route '{name}'")
+            elif rtype == 'vultr_vpc_peering' and props.get('peering_id'):
+                vp.delete_vpc_peering(props['peering_id'])
+                update_state(state, res, 'delete')
+                logger.info(f"Deleted VPC peering '{name}'")
             if rtype == 'vultr_instance' and props.get('instance_id'):
                 vp.delete_instance(props['instance_id'])
                 update_state(state, res, 'delete')

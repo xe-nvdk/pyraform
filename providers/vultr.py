@@ -202,6 +202,26 @@ class VultrProvider:
         self._req("DELETE", f"/snapshots/{snapshot_id}")
         return True
 
+    # VPC Routes (endpoints may vary by API edition)
+    def create_vpc_route(self, vpc_id: str, *, cidr: str, next_hop: str):
+        payload = {"cidr": cidr, "next_hop": next_hop}
+        return self._req("POST", f"/vpcs/{vpc_id}/routes", json=payload).get("route")
+
+    def delete_vpc_route(self, vpc_id: str, route_id: str):
+        self._req("DELETE", f"/vpcs/{vpc_id}/routes/{route_id}")
+        return True
+
+    # VPC Peering (endpoint paths are subject to change; best-effort)
+    def create_vpc_peering(self, *, vpc_id: str, peer_vpc_id: str, label: str | None = None):
+        payload = {"vpc_id": vpc_id, "peer_vpc_id": peer_vpc_id}
+        if label:
+            payload["label"] = label
+        return self._req("POST", "/vpcs/peers", json=payload).get("peer")
+
+    def delete_vpc_peering(self, peering_id: str):
+        self._req("DELETE", f"/vpcs/peers/{peering_id}")
+        return True
+
     # VPC (Private Networks)
     def create_vpc(self, *, region: str, description: str | None = None, ip_block: str | None = None, prefix_length: int | None = None):
         payload = {"region": region}

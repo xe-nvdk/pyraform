@@ -221,7 +221,8 @@ def plan(provider, filter_action: str | None = None):
     headers = ["Name", "Type", "Action", "Details"]
     logger.info("\n" + tabulate(table, headers, tablefmt="pretty"))
     
-    logger.info(f"\nPlan: {actions['create']} to add, {actions['update']} to change, {actions['no_change']} unchanged.")
+    extra = f", {actions['recreate']} require recreate" if actions.get('recreate') else ""
+    logger.info(f"\nPlan: {actions['create']} to add, {actions['update']} to change, {actions['no_change']} unchanged{extra}.")
 
 def confirm_action(prompt):
     """Ask user to confirm the action."""
