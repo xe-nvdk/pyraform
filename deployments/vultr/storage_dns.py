@@ -56,6 +56,13 @@ def deploy():
                 if kid:
                     ssh_ids.append(kid)
             logger.info(f"Creating Vultr instance: {name}")
+            # Resolve startup script if referenced by name
+            script_id = None
+            if props.get('startup_script'):
+                ss = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_startup_script' and r.get('name') == props['startup_script']), None)
+                if ss and ss.get('properties', {}).get('script_id'):
+                    script_id = ss['properties']['script_id']
+
             instance = vp.create_instance(
                 region=props['region'],
                 plan=props['plan'],
@@ -64,6 +71,7 @@ def deploy():
                 label=name,
                 ssh_key_ids=ssh_ids or None,
                 user_data=props.get('user_data'),
+                startup_script_id=script_id,
                 tags=props.get('tags'),
             )
             if instance and instance.get('id'):
@@ -293,6 +301,24 @@ def deploy():
                     s3.create_bucket(Bucket=bucket)
                     logger.info(f"Created Object Storage bucket '{bucket}'")
                 update_state(state, {'type': 'vultr_object_storage','name': name,'properties': {**props, 'region': region}}, 'create')
+
+        elif rtype in ('startup_script','startupscript','script'):
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_startup_script' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('script_id'):
+                logger.info(f"Startup script '{name}' already exists")
+                continue
+            scr = vp.create_startup_script(name=name, script=props['script'], script_type=props.get('type', 'boot'))
+            update_state(state, {'type': 'vultr_startup_script','name': name,'properties': {**props, 'script_id': (scr or {}).get('id')}}, 'create')
+            logger.info(f"Created startup script '{name}'")
+
+        elif rtype in ('ssh_key','sshkey'):
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_ssh_key' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('key_id'):
+                logger.info(f"SSH key '{name}' already exists")
+                continue
+            key = vp.create_ssh_key(name=name, ssh_key=props['public_key'])
+            update_state(state, {'type': 'vultr_ssh_key','name': name,'properties': {**props, 'key_id': (key or {}).get('id')}}, 'create')
+            logger.info(f"Created SSH key '{name}'")
 
 
 def destroy():

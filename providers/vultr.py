@@ -38,7 +38,8 @@ class VultrProvider:
     # Instances
     def create_instance(self, *, region: str, plan: str, os_id: int | None = None,
                         image_id: str | None = None, label: str | None = None,
-                        ssh_key_ids: list[str] | None = None, user_data: str | None = None, tags: list[str] | None = None):
+                        ssh_key_ids: list[str] | None = None, user_data: str | None = None,
+                        startup_script_id: str | None = None, tags: list[str] | None = None):
         payload = {
             "region": region,
             "plan": plan,
@@ -53,6 +54,8 @@ class VultrProvider:
             payload["sshkey_id"] = ssh_key_ids
         if user_data:
             payload["user_data"] = user_data
+        if startup_script_id:
+            payload["script_id"] = startup_script_id
         if tags:
             payload["tags"] = tags
 

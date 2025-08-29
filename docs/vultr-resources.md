@@ -14,6 +14,34 @@ resources:
       tags: [web]
 ```
 
+
+
+### Startup Script
+
+```yaml
+resources:
+  - type: startup_script
+    name: init-web
+    properties:
+      type: boot
+      script: |
+        #!/bin/bash
+        echo "Hello from startup script" > /root/hello.txt
+```
+
+Instances can reference a startup script by name via `startup_script`.
+
+### SSH Key
+
+```yaml
+resources:
+  - type: ssh_key
+    name: my-key
+    properties:
+      public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...
+```
+
+Instances can reference SSH keys by label in `ssh_keys: [my-key]` or rely on keys already present in the account.
 ### Domain & DNS Record
 
 ```yaml

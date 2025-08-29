@@ -1,0 +1,24 @@
+resources:
+  - type: startup_script
+    name: init-web
+    properties:
+      type: boot
+      script: |
+        #!/bin/bash
+        echo "Hello from startup script" > /root/hello.txt
+
+  - type: ssh_key
+    name: my-key
+    properties:
+      public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...
+
+  - type: instance
+    name: web-vultr
+    properties:
+      region: ewr
+      plan: vc2-1c-1gb
+      os_id: 1743
+      ssh_keys: [my-key]     # label or ID
+      startup_script: init-web
+      tags: [web]
+

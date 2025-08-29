@@ -159,6 +159,13 @@ def plan(provider, filter_action: str | None = None):
                         if rem:
                             msg_parts.append(f"-{len(rem)}")
                         differences["tags"] = f"{Fore.YELLOW}{_pretty(current_props.get('tags'))}{Style.RESET_ALL} -> {Fore.GREEN}{_pretty(desired_props.get('tags'))}{Style.RESET_ALL} ({', '.join(msg_parts)})"
+                # Plan/region changes usually require recreate
+                for key in ("plan", "region"):
+                    if key in desired_props:
+                        old = current_props.get(key)
+                        new = desired_props.get(key)
+                        if old != new:
+                            differences[key] = f"{Fore.YELLOW}{_pretty(old)}{Style.RESET_ALL} -> {Fore.GREEN}{_pretty(new)}{Style.RESET_ALL} (recreate)"
             if rtype in ("volume",):
                 for key in ("size_gigabytes", "attach_to"):
                     if key in desired_props:
