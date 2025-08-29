@@ -190,3 +190,79 @@ class VultrProvider:
     def delete_snapshot(self, snapshot_id: str):
         self._req("DELETE", f"/snapshots/{snapshot_id}")
         return True
+
+    # VPC (Private Networks)
+    def create_vpc(self, *, region: str, description: str | None = None, ip_block: str | None = None, prefix_length: int | None = None):
+        payload = {"region": region}
+        if description:
+            payload["description"] = description
+        if ip_block and prefix_length:
+            payload["ip_block"] = ip_block
+            payload["prefix_length"] = prefix_length
+        return self._req("POST", "/vpcs", json=payload).get("vpc")
+
+    def delete_vpc(self, vpc_id: str):
+        self._req("DELETE", f"/vpcs/{vpc_id}")
+        return True
+
+    def attach_instance_to_vpc(self, instance_id: str, vpc_id: str):
+        # Per API, PATCH instance with vpc_id or vpc_ids
+        try:
+            return self._req("PATCH", f"/instances/{instance_id}", json={"vpc_id": vpc_id})
+        except Exception:
+            return self._req("PATCH", f"/instances/{instance_id}", json={"vpc_ids": [vpc_id]})
+
+    # Reserved IPs
+    def create_reserved_ip(self, *, region: str, ip_type: str = "v4", label: str | None = None):
+        payload = {"region": region, "ip_type": ip_type}
+        if label:
+            payload["label"] = label
+        return self._req("POST", "/reserved-ips", json=payload).get("reserved_ip")
+
+    def attach_reserved_ip(self, ip: str, instance_id: str):
+        return self._req("POST", f"/reserved-ips/{ip}/attach", json={"instance_id": instance_id})
+
+    def detach_reserved_ip(self, ip: str):
+        return self._req("POST", f"/reserved-ips/{ip}/detach")
+
+    def delete_reserved_ip(self, ip: str):
+        self._req("DELETE", f"/reserved-ips/{ip}")
+        return True
+
+    # Kubernetes (VKE)
+    def create_k8s_cluster(self, *, region: str, version: str, label: str, node_pools: list[dict]):
+        payload = {
+            "region": region,
+            "version": version,
+            "label": label,
+            "node_pools": node_pools,
+        }
+        return self._req("POST", "/kubernetes/clusters", json=payload).get("cluster")
+
+    def delete_k8s_cluster(self, cluster_id: str):
+        self._req("DELETE", f"/kubernetes/clusters/{cluster_id}")
+        return True
+
+    # Object Storage (S3 compatible) - via boto3 like DO Spaces
+    def s3_client(self, *, region: str, access_key: str, secret_key: str):
+        import boto3
+        endpoint = f"https://{region}.vultrobjects.com"
+        return boto3.client('s3', region_name=region, endpoint_url=endpoint,
+                            aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+
+    # Startup Scripts & SSH Keys
+    def create_startup_script(self, name: str, script: str, script_type: str = "boot"):
+        payload = {"name": name, "script": script, "type": script_type}
+        return self._req("POST", "/startup-scripts", json=payload).get("startup_script")
+
+    def delete_startup_script(self, script_id: str):
+        self._req("DELETE", f"/startup-scripts/{script_id}")
+        return True
+
+    def create_ssh_key(self, name: str, ssh_key: str):
+        payload = {"name": name, "ssh_key": ssh_key}
+        return self._req("POST", "/ssh-keys", json=payload).get("ssh_key")
+
+    def delete_ssh_key(self, key_id: str):
+        self._req("DELETE", f"/ssh-keys/{key_id}")
+        return True

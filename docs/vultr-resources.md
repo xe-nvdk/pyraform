@@ -94,3 +94,49 @@ resources:
 Notes:
 - Requires `vultr_credentials.api_key` in `settings.yml`.
 - Endpoints for block storage may vary; operations are best-effort with clear logs.
+
+### VPC
+
+```yaml
+resources:
+  - type: vpc
+    name: app-vpc
+    properties:
+      region: ewr
+      description: app network
+      # optional for custom CIDR
+      ip_block: 10.20.0.0
+      prefix_length: 20
+      instances: [web-vultr]
+```
+
+### Reserved IP
+
+```yaml
+resources:
+  - type: reserved_ip
+    name: web-reserved
+    properties:
+      region: ewr
+      ip_type: v4
+      attach_to: web-vultr
+```
+
+### Object Storage (S3-compatible)
+
+```yaml
+resources:
+  - type: object_storage
+    name: my-bucket
+    properties:
+      region: ewr1
+```
+
+settings.yml needs credentials under `vultr_object_storage`:
+
+```yaml
+vultr_object_storage:
+  access_key: ${VULTR_OBJECT_ACCESS}
+  secret_key: ${VULTR_OBJECT_SECRET}
+  region: ewr1
+```

@@ -220,6 +220,81 @@ def deploy():
             logger.info(f"Created snapshot '{name}'")
 
 
+        elif rtype == 'vpc':
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_vpc' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('vpc_id'):
+                logger.info(f"VPC '{name}' already exists")
+                # Attach instances if listed
+                for inst_name in props.get('instances', []) or []:
+                    inst = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_instance' and r.get('name') == inst_name), None)
+                    if inst and inst.get('properties', {}).get('instance_id') and existing['properties'].get('vpc_id'):
+                        try:
+                            vp.attach_instance_to_vpc(inst['properties']['instance_id'], existing['properties']['vpc_id'])
+                        except Exception as e:
+                            logger.warning(f"Failed attaching instance '{inst_name}' to VPC '{name}': {e}")
+                
+            else:
+                vpc = vp.create_vpc(region=props['region'], description=props.get('description'), ip_block=props.get('ip_block'), prefix_length=props.get('prefix_length'))
+                vpc_id = (vpc or {}).get('id')
+                # Attach instances
+                for inst_name in props.get('instances', []) or []:
+                    inst = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_instance' and r.get('name') == inst_name), None)
+                    if inst and inst.get('properties', {}).get('instance_id') and vpc_id:
+                        try:
+                            vp.attach_instance_to_vpc(inst['properties']['instance_id'], vpc_id)
+                        except Exception as e:
+                            logger.warning(f"Failed attaching instance '{inst_name}' to VPC '{name}': {e}")
+                update_state(state, {'type': 'vultr_vpc','name': name,'properties': {**props, 'vpc_id': vpc_id}}, 'create')
+                logger.info(f"Created VPC '{name}'")
+
+        elif rtype in ('reserved_ip','reservedip','rip'):
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_reserved_ip' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('ip'):
+                logger.info(f"Reserved IP '{name}' already exists")
+            else:
+                rip = vp.create_reserved_ip(region=props['region'], ip_type=props.get('ip_type','v4'), label=name)
+                ip = (rip or {}).get('ip') or (rip or {}).get('address')
+                # attach to instance if provided
+                inst_name = props.get('attach_to')
+                if inst_name and ip:
+                    inst = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_instance' and r.get('name') == inst_name), None)
+                    if inst and inst.get('properties', {}).get('instance_id'):
+                        try:
+                            vp.attach_reserved_ip(ip, inst['properties']['instance_id'])
+                        except Exception as e:
+                            logger.warning(f"Failed to attach reserved IP '{ip}' to '{inst_name}': {e}")
+                update_state(state, {'type': 'vultr_reserved_ip','name': name,'properties': {**props, 'ip': ip}}, 'create')
+                logger.info(f"Created reserved IP '{name}'")
+
+        elif rtype in ('kubernetes','k8s','vke'):
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_k8s' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('cluster_id'):
+                logger.info(f"VKE cluster '{name}' already exists")
+            else:
+                cluster = vp.create_k8s_cluster(region=props['region'], version=props['version'], label=name, node_pools=props['node_pools'])
+                update_state(state, {'type': 'vultr_k8s','name': name,'properties': {**props, 'cluster_id': (cluster or {}).get('id')}}, 'create')
+                logger.info(f"Created VKE cluster '{name}'")
+
+        elif rtype in ('object_storage','objectstorage','bucket'):
+            # Manage via S3
+            oss = user_settings.get('vultr_object_storage', {}) or {}
+            access_key = oss.get('access_key') or oss.get('access_key_id')
+            secret_key = oss.get('secret_key') or oss.get('secret_access_key')
+            region = props.get('region') or oss.get('region') or 'ewr1'
+            if not (access_key and secret_key and region):
+                logger.error("Object Storage credentials/region missing in settings.yml (vultr_object_storage)")
+            else:
+                s3 = vp.s3_client(region=region, access_key=access_key, secret_key=secret_key)
+                bucket = name
+                try:
+                    s3.head_bucket(Bucket=bucket)
+                    logger.info(f"Object Storage bucket '{bucket}' already exists")
+                except Exception:
+                    s3.create_bucket(Bucket=bucket)
+                    logger.info(f"Created Object Storage bucket '{bucket}'")
+                update_state(state, {'type': 'vultr_object_storage','name': name,'properties': {**props, 'region': region}}, 'create')
+
+
 def destroy():
     state = load_state()
     user_settings = load_user_settings()
