@@ -19,7 +19,7 @@ def plan(provider, filter_action: str | None = None):
     logger.debug("Infrastructure config loaded.")
 
     table = []
-    actions = {"create": 0, "update": 0, "no_change": 0, "destroy": 0}
+    actions = {"create": 0, "update": 0, "no_change": 0, "destroy": 0, "recreate": 0}
 
     # Special destroy-focused plan: list state resources that will be destroyed
     if filter_action == 'destroy':
@@ -196,6 +196,8 @@ def plan(provider, filter_action: str | None = None):
             if differences:
                 status = f"{Fore.YELLOW}update required{Style.RESET_ALL}"
                 actions["update"] += 1
+                if any('(recreate)' in v for v in differences.values()):
+                    actions['recreate'] += 1
                 diff_display = ", ".join([f"{k}: {v}" for k, v in differences.items()])
             else:
                 status = f"{Fore.GREEN}no changes{Style.RESET_ALL}"

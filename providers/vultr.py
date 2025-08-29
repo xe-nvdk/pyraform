@@ -167,7 +167,9 @@ class VultrProvider:
         return self._req("PATCH", f"/instances/{instance_id}", json={"firewall_group_id": group_id})
 
     # Load Balancers
-    def create_load_balancer(self, *, region: str, label: str, forwarding_rules: list, instances: list[str] | None = None, health_check: dict | None = None):
+    def create_load_balancer(self, *, region: str, label: str, forwarding_rules: list,
+                             instances: list[str] | None = None, health_check: dict | None = None,
+                             sticky_sessions: dict | None = None, ssl: dict | None = None, ssl_redirect: bool | None = None):
         payload = {
             "region": region,
             "label": label,
@@ -177,6 +179,12 @@ class VultrProvider:
             payload["instances"] = instances
         if health_check:
             payload["health_check"] = health_check
+        if sticky_sessions:
+            payload["sticky_sessions"] = sticky_sessions
+        if ssl:
+            payload["ssl"] = ssl
+        if ssl_redirect is not None:
+            payload["ssl_redirect"] = ssl_redirect
         return self._req("POST", "/load-balancers", json=payload).get("load_balancer")
 
     def delete_load_balancer(self, lb_id: str):

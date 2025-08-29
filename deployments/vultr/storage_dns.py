@@ -56,6 +56,21 @@ def deploy():
                 if kid:
                     ssh_ids.append(kid)
             logger.info(f"Creating Vultr instance: {name}")
+            # Cloud-init/user-data helpers: support loading from file and optional base64
+            user_data = props.get('user_data')
+            if props.get('user_data_file') and not user_data:
+                try:
+                    with open(props['user_data_file'], 'r') as f:
+                        user_data = f.read()
+                except Exception as e:
+                    logger.warning(f"Failed to read user_data_file for instance '{name}': {e}")
+            # Some APIs expect base64 for user_data; allow explicit control
+            if user_data and props.get('user_data_base64'):
+                try:
+                    import base64
+                    user_data = base64.b64encode(user_data.encode()).decode()
+                except Exception as e:
+                    logger.warning(f"Failed to base64‑encode user_data for '{name}': {e}")
             # Resolve startup script if referenced by name
             script_id = None
             if props.get('startup_script'):
@@ -70,7 +85,7 @@ def deploy():
                 image_id=props.get('image_id'),
                 label=name,
                 ssh_key_ids=ssh_ids or None,
-                user_data=props.get('user_data'),
+                user_data=user_data,
                 startup_script_id=script_id,
                 tags=props.get('tags'),
             )
@@ -199,7 +214,10 @@ def deploy():
                 label=name,
                 forwarding_rules=props['forwarding_rules'],
                 instances=instance_ids or None,
-                health_check=props.get('health_check')
+                health_check=props.get('health_check'),
+                sticky_sessions=props.get('sticky_sessions'),
+                ssl=props.get('ssl'),
+                ssl_redirect=props.get('ssl_redirect')
             )
             update_state(state, {
                 'type': 'vultr_load_balancer',
