@@ -1,0 +1,16 @@
+resources:
+  - type: load_balancer
+    name: web-lb
+    properties:
+      region: nyc3
+      forwarding_rules:
+        - entry_protocol: http
+          entry_port: 80
+          target_protocol: http
+          target_port: 80
+      health_check:
+        protocol: http
+        port: 80
+        path: /
+      droplets: [web-server]
+

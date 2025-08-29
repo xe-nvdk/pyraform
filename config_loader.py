@@ -1,6 +1,7 @@
 import yaml
 import os
 
+
 def replace_env_variables(config):
     if isinstance(config, dict):
         for key, value in config.items():
@@ -17,8 +18,10 @@ def load_yaml(file_path):
         config = yaml.safe_load(file)
     return replace_env_variables(config)
 
-def load_infrastructure_config():
-    return load_yaml('infrastructure.yml')
+def load_infrastructure_config(file_path: str | None = None):
+    path = file_path or os.getenv('PYRAFORM_INFRA', 'infrastructure.yml')
+    return load_yaml(path)
 
-def load_user_settings():
-    return load_yaml('settings.yml')
+def load_user_settings(file_path: str | None = None):
+    path = file_path or os.getenv('PYRAFORM_SETTINGS', 'settings.yml')
+    return load_yaml(path)

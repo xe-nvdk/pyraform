@@ -1,0 +1,78 @@
+resources:
+  - type: vpc
+    name: app-vpc
+    properties:
+      region: nyc3
+      ip_range: 10.10.0.0/20
+      description: app network
+
+  - type: droplet
+    name: web-server
+    properties:
+      image: ubuntu-20-04-x64
+      size: s-1vcpu-1gb
+      region: nyc3
+      ssh_keys: [m1]
+      tags: [web]
+
+  - type: volume
+    name: data-disk
+    properties:
+      size_gigabytes: 25
+      region: nyc3
+      description: app data
+      attach_to: web-server
+
+  - type: firewall
+    name: web-fw
+    properties:
+      inbound_rules:
+        - protocol: tcp
+          ports: "80"
+          sources: {addresses: ["0.0.0.0/0", "::/0"]}
+        - protocol: tcp
+          ports: "22"
+          sources: {addresses: ["0.0.0.0/0", "::/0"]}
+      outbound_rules:
+        - protocol: tcp
+          ports: "all"
+          destinations: {addresses: ["0.0.0.0/0", "::/0"]}
+      droplets: [web-server]
+      tags: [web]
+
+  - type: load_balancer
+    name: web-lb
+    properties:
+      region: nyc3
+      forwarding_rules:
+        - entry_protocol: http
+          entry_port: 80
+          target_protocol: http
+          target_port: 80
+      health_check:
+        protocol: http
+        port: 80
+        path: /
+      droplets: [web-server]
+
+  - type: floating_ip
+    name: public-ip
+    properties:
+      region: nyc3
+      assign_to: web-server
+
+  - type: domain
+    name: root-domain
+    properties:
+      name: example.com
+      ip_address: 203.0.113.10
+
+  - type: dns_record
+    name: app-a-record
+    properties:
+      domain: example.com
+      type: A
+      name: app
+      data: 203.0.113.11
+      ttl: 1800
+

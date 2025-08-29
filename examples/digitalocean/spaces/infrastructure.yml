@@ -1,0 +1,14 @@
+resources:
+  - type: space
+    name: my-space
+    properties:
+      region: nyc3
+      acl: private
+      force_destroy: true
+      versioning: true
+      lifecycle:
+        Rules:
+          - ID: expire-old-versions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30

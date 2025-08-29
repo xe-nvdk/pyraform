@@ -1,0 +1,8 @@
+resources:
+  - type: vpc
+    name: app-vpc
+    properties:
+      region: nyc3
+      ip_range: 10.10.0.0/20
+      description: app network
+

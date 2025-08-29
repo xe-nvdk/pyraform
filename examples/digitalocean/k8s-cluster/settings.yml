@@ -1,0 +1,6 @@
+provider: do
+
+do_credentials:
+  token: ${DO_TOKEN}
+  region: nyc1
+

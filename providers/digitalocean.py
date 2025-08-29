@@ -1,3 +1,4 @@
+import logging
 import digitalocean
 from digitalocean import DataReadError
 
@@ -16,7 +17,7 @@ class DigitalOceanProvider:
         for different services like AWS does. Instead, the DigitalOcean manager is used directly.
         This method is here just to align with the interface used in AWSProvider.
         """
-        print(f"Note: DigitalOcean uses a single client (manager) for all operations, not service-specific clients.")
+        logging.getLogger(__name__).debug("DigitalOcean uses a single manager for all operations.")
         return self.manager
 
     def get_ssh_key_id(self, ssh_key_name):
@@ -30,7 +31,28 @@ class DigitalOceanProvider:
             for key in ssh_keys:
                 if key.name == ssh_key_name:
                     return key.id
-            print(f"SSH key named '{ssh_key_name}' not found.")
+            logging.getLogger(__name__).warning(f"SSH key named '{ssh_key_name}' not found.")
         except DataReadError as e:
-            print(f"Error reading SSH keys: {e}")
+            logging.getLogger(__name__).error(f"Error reading SSH keys: {e}")
+        return None
+
+    def get_droplet_id_by_name(self, name):
+        """Return droplet ID by name, or None if not found."""
+        try:
+            for droplet in self.manager.get_all_droplets():
+                if droplet.name == name:
+                    return droplet.id
+        except Exception as e:
+            logging.getLogger(__name__).error(f"Error listing droplets: {e}")
+        return None
+
+    def get_domain(self, domain_name):
+        """Return a Domain object if it exists, else None."""
+        try:
+            domains = self.manager.get_all_domains()
+            for d in domains:
+                if d.name == domain_name:
+                    return d
+        except Exception as e:
+            logging.getLogger(__name__).error(f"Error listing domains: {e}")
         return None

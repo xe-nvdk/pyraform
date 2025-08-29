@@ -1,0 +1,12 @@
+resources:
+  - type: kubernetes
+    name: app-cluster
+    properties:
+      region: nyc1
+      version: 1.29.1-do.0
+      node_pools:
+        - name: pool-1
+          size: s-2vcpu-4gb
+          count: 2
+      tags: [prod]
+

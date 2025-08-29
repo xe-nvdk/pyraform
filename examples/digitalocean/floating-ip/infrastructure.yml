@@ -1,0 +1,7 @@
+resources:
+  - type: floating_ip
+    name: public-ip
+    properties:
+      region: nyc3
+      assign_to: web-server
+

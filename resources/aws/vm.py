@@ -34,7 +34,7 @@ class VM:
             return
 
         try:
-            response = response = ec2_client.run_instances(
+            response = ec2_client.run_instances(
                 ImageId=self.image_id,
                 InstanceType=self.instance_type,
                 KeyName=self.key_name,

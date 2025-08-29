@@ -1,0 +1,10 @@
+resources:
+  - type: database
+    name: app-db
+    properties:
+      engine: pg
+      version: 15
+      size: db-s-1vcpu-1gb
+      region: nyc3
+      num_nodes: 1
+

@@ -1,0 +1,15 @@
+resources:
+  - type: firewall
+    name: web-fw
+    properties:
+      inbound_rules:
+        - protocol: tcp
+          ports: "80"
+          sources: {addresses: ["0.0.0.0/0", "::/0"]}
+      outbound_rules:
+        - protocol: tcp
+          ports: "all"
+          destinations: {addresses: ["0.0.0.0/0", "::/0"]}
+      droplets: [web-server]
+      tags: [web]
+

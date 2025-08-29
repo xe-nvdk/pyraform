@@ -1,0 +1,11 @@
+provider: do
+
+do_credentials:
+  token: ${DO_TOKEN}
+  region: nyc3
+
+spaces_credentials:
+  access_key: ${SPACES_ACCESS_KEY}
+  secret_key: ${SPACES_SECRET_KEY}
+  region: nyc3
+

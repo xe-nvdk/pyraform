@@ -14,9 +14,22 @@ def save_state(state, file_path='state.json'):
         json.dump(state, file, indent=4)
 
 def update_state(state, resource, action):
-    """Updates the state based on an action (create, update, delete)."""
+    """Updates the state based on an action (create, update, delete).
+
+    Behavior:
+    - create: upsert by (name, type)
+    - update: replace properties of existing (name, type)
+    - delete: remove matching (name, type)
+    """
     if action == "create":
-        state["resources"].append(resource)
+        updated = False
+        for i, res in enumerate(state.get("resources", [])):
+            if res.get("name") == resource.get("name") and res.get("type") == resource.get("type"):
+                state["resources"][i] = resource
+                updated = True
+                break
+        if not updated:
+            state.setdefault("resources", []).append(resource)
     elif action == "update":
         for res in state["resources"]:
             if res["name"] == resource["name"] and res["type"] == resource["type"]:
