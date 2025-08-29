@@ -2,15 +2,15 @@
 
 ![Pyraform](<pyraform.webp>)
 
-Pyraform is a Python-based tool that simplifies Infrastructure as Code (IaC) for managing AWS (more Cloud Providers coming soon) resources. It leverages easy-to-write YAML configurations for efficient setup, alteration, and dismantling of cloud infrastructures, ensuring consistency, reliability, and ease of use.
+Pyraform is a Python-based, multi‑cloud IaC tool. Define infrastructure in simple YAML, plan the changes, and apply them consistently. DigitalOcean is the most complete provider today; AWS, GCP, Vultr and others are planned.
 
 ## Features
 
-- **Infrastructure as Code**: Define and manage your AWS infrastructure using simple YAML files.
-- **State Management**: Track your infrastructure's current state with a `state.json` file.
-- **Resource Management**: Automate the creation, modification, and deletion of resources like VMs and disks.
-- **DigitalOcean and AWS Integration**: Seamlessly interacts with AWS and DigitalOcean services.
-- **More Cloud Providers are coming**. Your contribution is vital to this project.
+- **Infrastructure as Code**: Simple YAML to describe resources and relationships.
+- **Plan & Apply**: Preview diffs per resource before applying.
+- **State Management**: Tracks current resources in `state.json` with upsert behavior.
+- **DigitalOcean‑first**: Droplets, Volumes, Firewalls, Load Balancers, Floating IPs, VPCs, Domains, DNS, Kubernetes, Databases, Spaces.
+- **Extensible**: AWS integration exists; more providers incoming. Contributions welcome.
 
 ## Getting Started
 
@@ -41,7 +41,7 @@ resources:
 ```
 
 ## Deploying a DigitalOcean Droplet
-You can pass custom config paths via flags, or rely on defaults (`settings.yml` and `infrastructure.yml` in the CWD). You can also override the provider and auto-approve actions. For the example below, point to the sample files:
+You can pass custom config paths via flags, or rely on defaults (`settings.yml` and `infrastructure.yml` in the CWD). For the example below, point to the sample files:
 
 ```bash
 python3 pyraform.py plan \
@@ -56,27 +56,7 @@ python3 pyraform.py deploy \
   --verbose
 ```
 
-Something like should appear in your terminal. Press 'y' to move forward: 
-
-```bash
-Infrastructure config:
-+------------+---------+-------------------+------------------------------------------------------------------------------------------------------------------------------------+
-|    Name    |  Type   |      Action       |                                                              Details                                                               |
-+------------+---------+-------------------+------------------------------------------------------------------------------------------------------------------------------------+
-| web-server | droplet | creation required | image: ubuntu-20-04-x64, size: s-1vcpu-1gb, ssh_keys: ['m1'], region: nyc3, user_data: ./webserver.sh, tags: ['web', 'production'] |
-+------------+---------+-------------------+------------------------------------------------------------------------------------------------------------------------------------+
-
-Plan: 1 to add, 0 to change, 0 unchanged.
-Proceed with the deployment? [y/n]: 
-```
-If everything is going good... something like that should appear.
-
-```bash
-Creating Droplet: web-server with properties {'image': 'ubuntu-20-04-x64', 'size': 's-1vcpu-1gb', 'ssh_keys': ['m1'], 'region': 'nyc3', 'user_data': './webserver.sh', 'tags': ['web', 'production']}
-Droplet 'web-server' creation request sent.
-Droplet web-server created with ID: 415570865
-Infrastructure deployment process completed.
-```
+The planner prints a table of actions and a summary such as: `Plan: 1 to add, 0 to change, 0 unchanged.`
 
 ## Destroying DigitalOcean Droplet
 To tear down your infrastructure, use the same flags if using example files:
@@ -219,6 +199,13 @@ Notes:
 - Names in fields like `attach_to`, `droplets`, and `assign_to` refer to resource names in the same config and are resolved to IDs automatically.
 - Use `--verbose` to see detailed logs and `--auto-approve` to bypass interactive prompts.
 - Kubernetes and Database support requires a python-digitalocean version that provides these classes; otherwise, the tool logs a clear message.
+
+### CLI Flags
+- `--settings`: Path to `settings.yml` (defaults to `./settings.yml`).
+- `--infrastructure`: Path to `infrastructure.yml` (defaults to `./infrastructure.yml`).
+- `--provider`: Provider override, e.g. `do`.
+- `--auto-approve`: Skips interactive confirmation.
+- `--verbose`: Enables detailed logs.
 
 ## Examples
 
