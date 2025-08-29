@@ -107,6 +107,7 @@ More Vultr examples (domains, DNS records, block storage) are available here:
 
 docs/vultr-resources.md
 
+
 Kubernetes cluster:
 
 ```bash

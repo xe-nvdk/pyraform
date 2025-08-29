@@ -45,7 +45,52 @@ resources:
       attach_to: web-vultr
 ```
 
+### Firewall
+
+```yaml
+resources:
+  - type: firewall
+    name: web-fw
+    properties:
+      rules:
+        - protocol: tcp
+          ip_type: v4
+          subnet: 0.0.0.0
+          subnet_size: 0
+          port: "80"
+      instances: [web-vultr]
+```
+
+### Load Balancer
+
+```yaml
+resources:
+  - type: load_balancer
+    name: web-lb
+    properties:
+      region: ewr
+      forwarding_rules:
+        - frontend_protocol: http
+          frontend_port: 80
+          backend_protocol: http
+          backend_port: 80
+      health_check:
+        protocol: http
+        port: 80
+        path: /
+      instances: [web-vultr]
+```
+
+### Snapshot
+
+```yaml
+resources:
+  - type: snapshot
+    name: web-snap-2024-06-01
+    properties:
+      instance: web-vultr
+```
+
 Notes:
 - Requires `vultr_credentials.api_key` in `settings.yml`.
 - Endpoints for block storage may vary; operations are best-effort with clear logs.
-

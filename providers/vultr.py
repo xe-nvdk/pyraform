@@ -117,3 +117,64 @@ class VultrProvider:
     def delete_block(self, block_id: str):
         self._req("DELETE", f"/blocks/{block_id}")
         return True
+
+    # Firewall Groups & Rules
+    def list_firewall_groups(self):
+        return self._req("GET", "/firewall-groups").get("firewall_groups", [])
+
+    def create_firewall_group(self, description: str):
+        return self._req("POST", "/firewall-groups", json={"description": description}).get("firewall_group")
+
+    def delete_firewall_group(self, group_id: str):
+        self._req("DELETE", f"/firewall-groups/{group_id}")
+        return True
+
+    def list_firewall_rules(self, group_id: str):
+        return self._req("GET", f"/firewall-groups/{group_id}/rules").get("rules", [])
+
+    def create_firewall_rule(self, group_id: str, *, protocol: str, ip_type: str, subnet: str, subnet_size: int, port: str | None = None):
+        payload = {
+            "protocol": protocol,
+            "ip_type": ip_type,
+            "subnet": subnet,
+            "subnet_size": subnet_size,
+        }
+        if port:
+            payload["port"] = port
+        return self._req("POST", f"/firewall-groups/{group_id}/rules", json=payload).get("rule")
+
+    def delete_firewall_rule(self, group_id: str, rule_id: str):
+        self._req("DELETE", f"/firewall-groups/{group_id}/rules/{rule_id}")
+        return True
+
+    def attach_firewall_group_to_instance(self, instance_id: str, group_id: str):
+        # PATCH instance to set firewall_group_id
+        return self._req("PATCH", f"/instances/{instance_id}", json={"firewall_group_id": group_id})
+
+    # Load Balancers
+    def create_load_balancer(self, *, region: str, label: str, forwarding_rules: list, instances: list[str] | None = None, health_check: dict | None = None):
+        payload = {
+            "region": region,
+            "label": label,
+            "forwarding_rules": forwarding_rules,
+        }
+        if instances:
+            payload["instances"] = instances
+        if health_check:
+            payload["health_check"] = health_check
+        return self._req("POST", "/load-balancers", json=payload).get("load_balancer")
+
+    def delete_load_balancer(self, lb_id: str):
+        self._req("DELETE", f"/load-balancers/{lb_id}")
+        return True
+
+    # Snapshots
+    def create_snapshot(self, *, instance_id: str, label: str | None = None):
+        payload = {"instance_id": instance_id}
+        if label:
+            payload["label"] = label
+        return self._req("POST", "/snapshots", json=payload).get("snapshot")
+
+    def delete_snapshot(self, snapshot_id: str):
+        self._req("DELETE", f"/snapshots/{snapshot_id}")
+        return True

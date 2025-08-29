@@ -61,9 +61,14 @@ def plan(provider, filter_action: str | None = None):
         removed = [json.loads(x) if x.startswith('{') or x.startswith('[') else x for x in (o - n)]
         return added, removed
 
+    def _type_matches(state_type: str, cfg_type: str) -> bool:
+        st = (state_type or '').lower()
+        ct = (cfg_type or '').lower()
+        return st == ct or st.endswith(f"_{ct}")
+
     for resource in infrastructure_config['resources']:
         existing_resource = next((res for res in state.get('resources', [])
-                                  if res.get('name') == resource.get('name') and str(res.get('type', '')).lower() == str(resource.get('type', '')).lower()), None)
+                                  if res.get('name') == resource.get('name') and _type_matches(str(res.get('type', '')), str(resource.get('type', '')))), None)
         
         if existing_resource:
             def pretty(val):
@@ -89,6 +94,29 @@ def plan(provider, filter_action: str | None = None):
             rtype = str(resource.get('type', '')).lower()
             if rtype in ("firewall", "load_balancer", "loadbalancer", "lb"):
                 for list_key in ("inbound_rules", "outbound_rules", "forwarding_rules", "droplets", "tags"):
+                    if list_key in desired_props:
+                        add, rem = _list_diff(current_props.get(list_key), desired_props.get(list_key))
+                        if add or rem:
+                            msg_parts = []
+                            if add:
+                                msg_parts.append(f"+{len(add)}")
+                            if rem:
+                                msg_parts.append(f"-{len(rem)}")
+                            differences[list_key] = f"{Fore.YELLOW}{_pretty(current_props.get(list_key))}{Style.RESET_ALL} -> {Fore.GREEN}{_pretty(desired_props.get(list_key))}{Style.RESET_ALL} ({', '.join(msg_parts)})"
+            # Vultr firewall and load balancer list keys
+            if rtype in ("firewall",):
+                for list_key in ("rules", "instances"):
+                    if list_key in desired_props:
+                        add, rem = _list_diff(current_props.get(list_key), desired_props.get(list_key))
+                        if add or rem:
+                            msg_parts = []
+                            if add:
+                                msg_parts.append(f"+{len(add)}")
+                            if rem:
+                                msg_parts.append(f"-{len(rem)}")
+                            differences[list_key] = f"{Fore.YELLOW}{_pretty(current_props.get(list_key))}{Style.RESET_ALL} -> {Fore.GREEN}{_pretty(desired_props.get(list_key))}{Style.RESET_ALL} ({', '.join(msg_parts)})"
+            if rtype in ("load_balancer", "loadbalancer", "lb"):
+                for list_key in ("forwarding_rules", "instances"):
                     if list_key in desired_props:
                         add, rem = _list_diff(current_props.get(list_key), desired_props.get(list_key))
                         if add or rem:

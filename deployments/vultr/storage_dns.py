@@ -89,6 +89,78 @@ def deploy():
             update_state(state, new_state, 'create')
             logger.info(f"Created block storage '{name}'")
 
+        elif rtype == 'firewall':
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_firewall' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('group_id'):
+                logger.info(f"Vultr firewall '{name}' already exists")
+                continue
+            fw = vp.create_firewall_group(description=name)
+            group_id = fw.get('id') if fw else None
+            # rules: list of dicts with protocol, ip_type, subnet, subnet_size, port (optional)
+            for rule in props.get('rules', []) or []:
+                try:
+                    vp.create_firewall_rule(group_id, protocol=rule['protocol'], ip_type=rule['ip_type'], subnet=rule['subnet'], subnet_size=rule['subnet_size'], port=rule.get('port'))
+                except Exception as e:
+                    logger.warning(f"Failed to add rule to firewall '{name}': {e}")
+            # attach to instances
+            for inst_name in props.get('instances', []) or []:
+                inst = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_instance' and r.get('name') == inst_name), None)
+                if inst and inst.get('properties', {}).get('instance_id'):
+                    try:
+                        vp.attach_firewall_group_to_instance(inst['properties']['instance_id'], group_id)
+                    except Exception as e:
+                        logger.warning(f"Failed to attach firewall '{name}' to instance '{inst_name}': {e}")
+            update_state(state, {
+                'type': 'vultr_firewall',
+                'name': name,
+                'properties': {**props, 'group_id': group_id}
+            }, 'create')
+            logger.info(f"Created firewall '{name}'")
+
+        elif rtype in ('load_balancer', 'loadbalancer', 'lb'):
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_load_balancer' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('load_balancer_id'):
+                logger.info(f"Vultr load balancer '{name}' already exists")
+                continue
+            # resolve instance IDs by name
+            instance_ids = []
+            for inst_name in props.get('instances', []) or []:
+                inst = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_instance' and r.get('name') == inst_name), None)
+                if inst and inst.get('properties', {}).get('instance_id'):
+                    instance_ids.append(inst['properties']['instance_id'])
+            lb = vp.create_load_balancer(
+                region=props['region'],
+                label=name,
+                forwarding_rules=props['forwarding_rules'],
+                instances=instance_ids or None,
+                health_check=props.get('health_check')
+            )
+            update_state(state, {
+                'type': 'vultr_load_balancer',
+                'name': name,
+                'properties': {**props, 'load_balancer_id': (lb or {}).get('id')}
+            }, 'create')
+            logger.info(f"Created load balancer '{name}'")
+
+        elif rtype == 'snapshot':
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_snapshot' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('snapshot_id'):
+                logger.info(f"Vultr snapshot '{name}' already exists")
+                continue
+            # find instance by name
+            inst_name = props['instance']
+            inst = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_instance' and r.get('name') == inst_name), None)
+            if not inst or not inst.get('properties', {}).get('instance_id'):
+                logger.error(f"Cannot create snapshot '{name}': instance '{inst_name}' not found in state")
+                continue
+            snap = vp.create_snapshot(instance_id=inst['properties']['instance_id'], label=name)
+            update_state(state, {
+                'type': 'vultr_snapshot',
+                'name': name,
+                'properties': {**props, 'snapshot_id': (snap or {}).get('id')}
+            }, 'create')
+            logger.info(f"Created snapshot '{name}'")
+
 
 def destroy():
     state = load_state()
@@ -123,6 +195,18 @@ def destroy():
                 vp.delete_block(props['block_id'])
                 update_state(state, res, 'delete')
                 logger.info(f"Deleted block '{name}'")
+            elif rtype == 'vultr_firewall' and props.get('group_id'):
+                vp.delete_firewall_group(props['group_id'])
+                update_state(state, res, 'delete')
+                logger.info(f"Deleted firewall '{name}'")
+            elif rtype == 'vultr_load_balancer' and props.get('load_balancer_id'):
+                vp.delete_load_balancer(props['load_balancer_id'])
+                update_state(state, res, 'delete')
+                logger.info(f"Deleted load balancer '{name}'")
+            elif rtype == 'vultr_snapshot' and props.get('snapshot_id'):
+                vp.delete_snapshot(props['snapshot_id'])
+                update_state(state, res, 'delete')
+                logger.info(f"Deleted snapshot '{name}'")
         except Exception as e:
             logger.error(f"Failed to delete {rtype} '{name}': {e}")
 
@@ -140,4 +224,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
