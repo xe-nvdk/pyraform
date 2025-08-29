@@ -72,3 +72,48 @@ class VultrProvider:
         self._req("DELETE", f"/instances/{instance_id}")
         return True
 
+    # Domains
+    def list_domains(self):
+        return self._req("GET", "/domains").get("domains", [])
+
+    def create_domain(self, domain: str, ip: str | None = None):
+        payload = {"domain": domain}
+        if ip:
+            payload["ip"] = ip
+        return self._req("POST", "/domains", json=payload).get("domain")
+
+    def delete_domain(self, domain: str):
+        self._req("DELETE", f"/domains/{domain}")
+        return True
+
+    def list_records(self, domain: str):
+        return self._req("GET", f"/domains/{domain}/records").get("records", [])
+
+    def create_record(self, domain: str, *, type: str, name: str, data: str, ttl: int | None = None, priority: int | None = None):
+        payload = {"type": type, "name": name, "data": data}
+        if ttl is not None:
+            payload["ttl"] = ttl
+        if priority is not None:
+            payload["priority"] = priority
+        return self._req("POST", f"/domains/{domain}/records", json=payload).get("record")
+
+    def delete_record(self, domain: str, record_id: str):
+        self._req("DELETE", f"/domains/{domain}/records/{record_id}")
+        return True
+
+    # Block Storage (beta; endpoints may vary)
+    def create_block(self, *, region: str, size_gb: int, label: str | None = None):
+        payload = {"region": region, "size_gb": size_gb}
+        if label:
+            payload["label"] = label
+        return self._req("POST", "/blocks", json=payload).get("block")
+
+    def attach_block(self, block_id: str, instance_id: str):
+        return self._req("POST", f"/blocks/{block_id}/attach", json={"instance_id": instance_id})
+
+    def detach_block(self, block_id: str):
+        return self._req("POST", f"/blocks/{block_id}/detach")
+
+    def delete_block(self, block_id: str):
+        self._req("DELETE", f"/blocks/{block_id}")
+        return True

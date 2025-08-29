@@ -42,7 +42,8 @@ def main():
     if provider == 'do':
         deployment_module = importlib.import_module('deployments.digitalocean.droplets')
     elif provider in ('vultr', 'vul'):
-        deployment_module = importlib.import_module('deployments.vultr.instances')
+        # Use instances pipeline by default; if config contains DNS/volume types, the storage_dns module will handle them too
+        deployment_module = importlib.import_module('deployments.vultr.storage_dns')
     else:
         logger.error(f"Provider {provider or '(none)'} is not supported.")
         return

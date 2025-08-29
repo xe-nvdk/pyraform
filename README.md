@@ -103,6 +103,10 @@ python3 pyraform.py deploy \
   --provider vultr --auto-approve
 ```
 
+More Vultr examples (domains, DNS records, block storage) are available here:
+
+docs/vultr-resources.md
+
 Kubernetes cluster:
 
 ```bash
