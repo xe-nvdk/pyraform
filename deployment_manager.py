@@ -87,7 +87,8 @@ def plan(provider, filter_action: str | None = None):
             # Ignore ephemeral/computed fields in diffs
             generic_ignored = {
                 'droplet_ids','droplet_id','ip','ip_address','record_id','volume_id',
-                'firewall_id','load_balancer_id','vpc_id','database_id','cluster_id','status'
+                'firewall_id','load_balancer_id','vpc_id','database_id','cluster_id','status',
+                'instance_id','label','main_ip'
             }
 
             # Resource-specific list diffs
@@ -138,6 +139,17 @@ def plan(provider, filter_action: str | None = None):
                                 hint = " (power-cycle allowed)"
                             differences[key] = f"{Fore.YELLOW}{_pretty(old)}{Style.RESET_ALL} -> {Fore.GREEN}{_pretty(new)}{Style.RESET_ALL}{hint}"
                 # Tags add/remove counts
+                if "tags" in desired_props:
+                    add, rem = _list_diff(current_props.get("tags"), desired_props.get("tags"))
+                    if add or rem:
+                        msg_parts = []
+                        if add:
+                            msg_parts.append(f"+{len(add)}")
+                        if rem:
+                            msg_parts.append(f"-{len(rem)}")
+                        differences["tags"] = f"{Fore.YELLOW}{_pretty(current_props.get('tags'))}{Style.RESET_ALL} -> {Fore.GREEN}{_pretty(desired_props.get('tags'))}{Style.RESET_ALL} ({', '.join(msg_parts)})"
+            if rtype in ("instance",):
+                # Vultr instance tags
                 if "tags" in desired_props:
                     add, rem = _list_diff(current_props.get("tags"), desired_props.get("tags"))
                     if add or rem:

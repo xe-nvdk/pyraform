@@ -25,6 +25,64 @@ def deploy():
         name = res.get('name')
         props = res.get('properties', {})
 
+        if rtype == 'instance':
+            existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_instance' and r.get('name') == name), None)
+            if existing and existing.get('properties', {}).get('instance_id'):
+                iid = existing['properties']['instance_id']
+                try:
+                    desired_tags = props.get('tags')
+                    current_tags = existing.get('properties', {}).get('tags')
+                    if desired_tags is not None and desired_tags != current_tags:
+                        vp.update_instance(iid, tags=desired_tags)
+                        logger.info(f"Updated tags for instance '{name}'")
+                    fw_name = props.get('firewall')
+                    if fw_name:
+                        fw = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_firewall' and r.get('name') == fw_name), None)
+                        if fw and fw.get('properties', {}).get('group_id'):
+                            vp.attach_firewall_group_to_instance(iid, fw['properties']['group_id'])
+                            logger.info(f"Attached firewall '{fw_name}' to instance '{name}'")
+                    update_state(state, {
+                        'type': 'vultr_instance',
+                        'name': name,
+                        'properties': {**existing.get('properties', {}), **props, 'instance_id': iid}
+                    }, 'create')
+                except Exception as e:
+                    logger.warning(f"Failed to update instance '{name}': {e}")
+                continue
+
+            ssh_ids = []
+            for key in props.get('ssh_keys', []) or []:
+                kid = vp.find_ssh_key_id(key)
+                if kid:
+                    ssh_ids.append(kid)
+            logger.info(f"Creating Vultr instance: {name}")
+            instance = vp.create_instance(
+                region=props['region'],
+                plan=props['plan'],
+                os_id=props.get('os_id'),
+                image_id=props.get('image_id'),
+                label=name,
+                ssh_key_ids=ssh_ids or None,
+                user_data=props.get('user_data'),
+                tags=props.get('tags'),
+            )
+            if instance and instance.get('id'):
+                new_state = {
+                    'type': 'vultr_instance',
+                    'name': name,
+                    'properties': {
+                        **props,
+                        'instance_id': instance['id'],
+                        'label': instance.get('label') or name,
+                        'main_ip': instance.get('main_ip')
+                    }
+                }
+                update_state(state, new_state, 'create')
+                logger.info(f"Created Vultr instance '{name}' (ID: {instance['id']})")
+            else:
+                logger.error(f"Failed to create Vultr instance '{name}'")
+            continue
+
         if rtype == 'domain':
             existing = next((r for r in state.get('resources', []) if r.get('type') == 'vultr_domain' and r.get('name') == name), None)
             if existing:
@@ -179,6 +237,10 @@ def destroy():
         name = res.get('name')
         props = res.get('properties', {})
         try:
+            if rtype == 'vultr_instance' and props.get('instance_id'):
+                vp.delete_instance(props['instance_id'])
+                update_state(state, res, 'delete')
+                logger.info(f"Deleted instance '{name}'")
             if rtype == 'vultr_dns_record' and props.get('record_id'):
                 vp.delete_record(props['domain'], props['record_id'])
                 update_state(state, res, 'delete')

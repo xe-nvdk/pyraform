@@ -72,6 +72,18 @@ class VultrProvider:
         self._req("DELETE", f"/instances/{instance_id}")
         return True
 
+    def update_instance(self, instance_id: str, *, label: str | None = None, tags: list[str] | None = None, firewall_group_id: str | None = None):
+        payload = {}
+        if label is not None:
+            payload["label"] = label
+        if tags is not None:
+            payload["tags"] = tags
+        if firewall_group_id is not None:
+            payload["firewall_group_id"] = firewall_group_id
+        if not payload:
+            return {}
+        return self._req("PATCH", f"/instances/{instance_id}", json=payload)
+
     # Domains
     def list_domains(self):
         return self._req("GET", "/domains").get("domains", [])
