@@ -38,9 +38,11 @@ def main():
     provider = (args.provider or user_settings.get('provider', '')).lower()
 
     # Determine the module based on the provider
+    plan_module = importlib.import_module('deployment_manager')
     if provider == 'do':
         deployment_module = importlib.import_module('deployments.digitalocean.droplets')
-        plan_module = importlib.import_module('deployment_manager')
+    elif provider in ('vultr', 'vul'):
+        deployment_module = importlib.import_module('deployments.vultr.instances')
     else:
         logger.error(f"Provider {provider or '(none)'} is not supported.")
         return

@@ -1,0 +1,10 @@
+resources:
+  - type: instance
+    name: web-vultr
+    properties:
+      region: ewr
+      plan: vc2-1c-1gb
+      os_id: 1743          # Ubuntu 22.04 x64 (example; confirm in API)
+      ssh_keys: [my-key]
+      tags: [web]
+

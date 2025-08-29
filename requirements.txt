@@ -3,3 +3,4 @@ pyyaml
 python-digitalocean
 colorama
 tabulate
+requests
