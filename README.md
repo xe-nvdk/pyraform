@@ -69,7 +69,9 @@ python3 pyraform.py destroy \
 
 ## DigitalOcean Resources
 
-Below are example snippets you can include in your `infrastructure.yml` to manage more DigitalOcean resources.
+For full, well‑formatted examples of every DigitalOcean resource type (Droplet, Volume, Firewall, Load Balancer, Floating IP, VPC, Domain, DNS Record, Kubernetes, Database, Spaces), see:
+
+docs/digitalocean-resources.md
 
 - droplet
   - type: droplet
