@@ -1,0 +1,6 @@
+resources:
+  - type: snapshot
+    name: web-snap-2025-01-01
+    properties:
+      instance: web-vultr
+

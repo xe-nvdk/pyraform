@@ -1,0 +1,5 @@
+provider: vultr
+
+vultr_credentials:
+  api_key: ${VULTR_API_KEY}
+

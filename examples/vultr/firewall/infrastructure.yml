@@ -1,0 +1,12 @@
+resources:
+  - type: firewall
+    name: web-fw
+    properties:
+      rules:
+        - protocol: tcp
+          ip_type: v4
+          subnet: 0.0.0.0
+          subnet_size: 0
+          port: "80"
+      instances: [web-vultr]
+

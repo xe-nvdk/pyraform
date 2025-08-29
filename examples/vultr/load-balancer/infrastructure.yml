@@ -1,0 +1,16 @@
+resources:
+  - type: load_balancer
+    name: web-lb
+    properties:
+      region: ewr
+      forwarding_rules:
+        - frontend_protocol: http
+          frontend_port: 80
+          backend_protocol: http
+          backend_port: 80
+      health_check:
+        protocol: http
+        port: 80
+        path: /
+      instances: [web-vultr]
+
